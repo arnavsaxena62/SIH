@@ -41,9 +41,9 @@ def recommend_precautions(forecast: Forecast) -> List[Advice]:
 
     # Wind alerts
     if max_gust >= 25.0 or max_wind >= 25.0:
-        adv.append(Advice("Severe storm risk", f"Very high winds (up to {max_gust:.1f} m/s). Secure structures.", "danger"))
+        adv.append(Advice("Severe storm risk", f"Very high winds (up to {max_gust:.1f} km/hr). Secure structures.", "danger"))
     elif max_gust >= 17.0 or max_wind >= 17.0:
-        adv.append(Advice("High wind alert", f"Strong winds (up to {max_gust:.1f} m/s). Tie loose materials.", "warn"))
+        adv.append(Advice("High wind alert", f"Strong winds (up to {max_gust:.1f} km/hr). Tie loose materials.", "warn"))
 
     # If no alerts
     if not adv:

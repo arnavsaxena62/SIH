@@ -15,8 +15,8 @@ def print_hourly_forecast(points, limit):
     table.add_column("Temp °C")
     table.add_column("Humidity %")
     table.add_column("Precip mm")
-    table.add_column("Wind (m/s)")
-    table.add_column("Gust (m/s)")
+    table.add_column("Wind (km/hr)")
+    table.add_column("Gust (km/hr)")
 
     for p in points[:limit]:
         table.add_row(
@@ -40,7 +40,7 @@ def print_advice(items):
 
 def main():
     parser = argparse.ArgumentParser(description="weather precautions")
-    parser.add_argument("--city", type=str, default="Kochi,IN", help="City name (e.g., 'Kochi,IN' or 'Thiruvananthapuram,IN')")
+    parser.add_argument("--city", type=str, help="City name (e.g., 'Kochi,IN' or 'Thiruvananthapuram,IN')")
     parser.add_argument("--slots", type=int, default=24, help="How many hourly slots to display (default 24 ~ 1 day)") 
     args = parser.parse_args()
 
