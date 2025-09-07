@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Disease Detector</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #e0eafc, #c7d8f0);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            width: 500px;
+            text-align: center;
+        }
+        .remedy-list {
+            list-style-type: none;
+            padding: 0;
+            text-align: left;
+            margin-top: 1rem;
+        }
+        .remedy-item {
+            color: #1a6d38;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+        .remedy-item::before {
+            content: "•";
+            color: #1a6d38;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+        }
+        .gradient-button {
+            background-image: linear-gradient(to right, #66bb6a, #43a047);
+            transition: transform 0.2s ease-in-out;
+        }
+        .gradient-button:hover {
+            transform: scale(1.05);
+        }
+        .input-group {
+            border: 2px solid #ddd;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+        .result-card {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+        .malayalam-text {
+            color: #0b5a1f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mx-auto">
+        <h1 class="text-3xl font-semibold mb-2 text-gray-800">Plant Disease Identifier</h1>
+        <p class="text-gray-600 mb-6">Select a plant image to identify possible diseases.</p>
+        
+        <div class="input-group mb-6">
+            <input type="file" id="imageInput" accept="image/*" class="w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-full file:border-0
+                file:text-sm file:font-semibold
+                file:bg-green-50 file:text-green-700
+                hover:file:bg-green-100
+                transition-colors duration-200" />
+            <div class="mt-4">
+                <button id="identifyButton" class="w-full py-3 px-6 rounded-xl text-white font-semibold shadow-lg gradient-button focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50">
+                    Identify
+                </button>
+            </div>
+        </div>
+        
+        <div id="loading" class="hidden my-4 text-gray-500">
+            <svg class="animate-spin h-6 w-6 text-green-500 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <p class="mt-2">Processing image...</p>
+        </div>
+        
+        <div id="results" class="hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-800">Result</h2>
+            
+            <div class="result-card mb-4">
+                <h3 class="font-bold text-gray-700 mb-1">Plant Name:</h3>
+                <p id="plantName" class="text-gray-600"></p>
+                <h3 class="font-bold text-gray-700 mt-3 mb-1">Disease Name:</h3>
+                <p id="diseaseName" class="text-gray-600"></p>
+                <p id="wikiUrl" class="text-sm text-blue-500 mt-2 hover:underline cursor-pointer"></p>
+            </div>
+
+            <div class="result-card mb-4">
+                <h3 class="font-bold text-gray-700 mb-1">Cures & Local Remedies:</h3>
+                <ul id="remediesList" class="remedy-list"></ul>
+            </div>
+
+            <div class="result-card">
+                <h3 class="font-bold text-gray-700 mb-1">Companies & Fertilizers:</h3>
+                <ul id="companiesList" class="remedy-list"></ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const identifyButton = document.getElementById('identifyButton');
+        const imageInput = document.getElementById('imageInput');
+        const loadingDiv = document.getElementById('loading');
+        const resultsDiv = document.getElementById('results');
+        const plantNameEl = document.getElementById('plantName');
+        const diseaseNameEl = document.getElementById('diseaseName');
+        const wikiUrlEl = document.getElementById('wikiUrl');
+        const remediesListEl = document.getElementById('remediesList');
+        const companiesListEl = document.getElementById('companiesList');
+
+        identifyButton.addEventListener('click', async () => {
+            const file = imageInput.files[0];
+            if (!file) {
+                alert('Please select an image first!');
+                return;
+            }
+
+            loadingDiv.classList.remove('hidden');
+            resultsDiv.classList.add('hidden');
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                const response = await fetch('http://127.0.0.1:8000/identify', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    displayError(data.detail || 'An unknown error occurred.');
+                }
+            } catch (error) {
+                displayError('Failed to connect to the backend server.');
+            } finally {
+                loadingDiv.classList.add('hidden');
+            }
+        });
+
+        function capitalizeFirstLetter(string) {
+            if (!string) return '';
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        function isMalayalam(text) {
+            // Check if text contains characters in the Malayalam Unicode range
+            const malayalamUnicodeRange = /[\u0D00-\u0D7F]/;
+            return malayalamUnicodeRange.test(text);
+        }
+
+        function displayResults(data) {
+            resultsDiv.classList.remove('hidden');
+
+            plantNameEl.textContent = capitalizeFirstLetter(data.plant_name);
+            diseaseNameEl.textContent = capitalizeFirstLetter(data.disease_name);
+            
+            if (data.wiki_url) {
+                wikiUrlEl.textContent = 'Learn more on Wikipedia';
+                wikiUrlEl.onclick = () => window.open(data.wiki_url, '_blank');
+            } else {
+                wikiUrlEl.textContent = '';
+                wikiUrlEl.onclick = null;
+            }
+
+            remediesListEl.innerHTML = '';
+            companiesListEl.innerHTML = ''; 
+
+            if (data.remedies && Array.isArray(data.remedies)) {
+                data.remedies.forEach(remedy => {
+                    const li = document.createElement('li');
+                    li.textContent = remedy;
+                    li.classList.add('remedy-item');
+
+                    if (isMalayalam(remedy)) {
+                        li.classList.add('malayalam-text');
+                    }
+                    remediesListEl.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'Remedy information not available.';
+                li.classList.add('remedy-item');
+                remediesListEl.appendChild(li);
+            }
+        }
+        
+        function displayError(message) {
+            resultsDiv.classList.remove('hidden');
+            plantNameEl.textContent = 'Error';
+            diseaseNameEl.textContent = message;
+            wikiUrlEl.textContent = '';
+            remediesListEl.innerHTML = '';
+            companiesListEl.innerHTML = '';
+            const li = document.createElement('li');
+            li.textContent = 'Please check the server status.';
+            li.classList.add('remedy-item');
+            remediesListEl.appendChild(li);
+        }
+    </script>
+</body>
+</html>
