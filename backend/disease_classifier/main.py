@@ -18,6 +18,7 @@ if not API_KEY:
 api = CropHealthApi(api_key=API_KEY)
 app = FastAPI()
 
+
 @app.post("/identify")
 async def identify_disease(image: UploadFile = File(...)):
     try:
