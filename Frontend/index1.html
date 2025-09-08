@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MannAI - Your Farming Companion</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            overflow-x: hidden;
+        }
+
+        #farmers-group {
+            transition: transform 3.5s ease-in-out;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .farmer-sketch {
+            transition: all 0.5s ease-in-out;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .farmer-sketch img {
+            width: 100%;
+            height: auto;
+            max-width: 300px;
+        }
+
+        #farmer2 img {
+            max-height: 75vh;
+            max-width: 350px;
+        }
+
+        .is-active {
+            transform: scale(1.05);
+            filter: brightness(1);
+        }
+
+        .is-inactive {
+            filter: brightness(0.4);
+        }
+
+        #farmer2.flipped {
+            transform: translateX(-15vw) scaleX(-1);
+        }
+
+        .speech-bubble {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            position: absolute;
+            background-color: white;
+            padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 250px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            border: 1px solid #e5e7eb;
+            bottom: 100%;
+            margin-bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .flipped .speech-bubble {
+            transform: translateX(-50%) scaleX(-1);
+        }
+
+        .speech-bubble.visible {
+            opacity: 1;
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px;
+            border-style: solid;
+            border-color: white transparent transparent transparent;
+        }
+
+        .chatbot-container {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            cursor: grab;
+        }
+
+        .chatbot-container.dragging {
+            cursor: grabbing;
+            z-index: 1001;
+        }
+
+        .chatbot-window {
+            width: 350px;
+            height: 500px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 1rem;
+            transition: all 0.3s ease-in-out;
+            transform-origin: bottom right;
+        }
+
+        .chat-message {
+            max-width: 80%;
+        }
+
+        .user-message {
+            background-color: #10B981;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background-color: #E5E7EB;
+            color: #1F2937;
+            align-self: flex-start;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 768px) {
+            #hero .container {
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-end;
+                text-align: center;
+            }
+
+            #farmers-group {
+                flex-direction: column;
+                align-items: center;
+                transform: none !important;
+            }
+
+            .farmer-sketch {
+                margin-left: 0 !important;
+                margin-bottom: 2rem;
+            }
+
+            #farmer2.flipped {
+                transform: scaleX(-1) !important;
+            }
+
+            .speech-bubble {
+                width: 90%;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 0.8rem;
+                padding: 0.75rem;
+            }
+
+            .flipped .speech-bubble {
+                transform: translateX(-50%) scaleX(-1);
+            }
+
+            .chatbot-window {
+                width: 90%;
+                height: 80vh;
+                max-height: 500px;
+            }
+
+            .chatbot-container {
+                bottom: 1rem;
+                right: 50%;
+                transform: translateX(50%);
+                cursor: grab;
+            }
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+
+    <header class="bg-white/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 shadow-sm">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#hero">
+                <img src="images/mannai_logo.png" alt="MannAI Logo" class="h-14">
+            </a>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#hero" class="text-gray-600 hover:text-emerald-600">Home</a>
+                <a href="#features" class="text-gray-600 hover:text-emerald-600">Features</a>
+                <a href="#news" class="text-gray-600 hover:text-emerald-600">News</a>
+                <a href="#contact" class="text-gray-600 hover:text-emerald-600">Contact</a>
+            </nav>
+            <button class="bg-emerald-500 text-white px-5 py-2 rounded-full hover:bg-emerald-600 transition">Get Started</button>
+        </div>
+    </header>
+
+    <section id="hero" class="min-h-screen w-full flex flex-col pt-24 pb-12" style="background-image: url('images/background.png'); background-size: cover; background-position: center;">
+        <div class="flex-grow container mx-auto px-6 w-full flex items-end justify-between relative">
+
+            <div id="farmers-group" class="flex items-end">
+                <div id="farmer1" class="farmer-sketch relative">
+                    <div id="bubble1" class="speech-bubble">
+                        <p class="font-bold text-emerald-700 text-xs mb-1">Gopalan:</p>
+                        I am just tired of problems of pests hitting my crops and not being able to find the solution is even more frustrating.
+                    </div>
+                    <img src="farmer1.png" alt="Gopalan Sketch" class="max-h-[60vh]">
+                </div>
+                <div id="farmer2" class="farmer-sketch relative -ml-12 md:-ml-32">
+                    <div id="bubble2" class="speech-bubble">
+                        <p class="font-bold text-emerald-700 text-xs mb-1">Raman:</p>
+                        Same here, I'm just tired of the changing weather conditions. It's so unpredictable!
+                    </div>
+                    <img src="farmer2.png" alt="Raman Sketch" class="max-h-[75vh]">
+                </div>
+            </div>
+
+            <div id="old-farmer" class="farmer-sketch relative">
+                <div id="bubble-old" class="speech-bubble">
+                    <p class="font-bold text-emerald-700 text-xs mb-1">Tenali Ramakrishna:</p>
+                    Use <strong>MannAI</strong>. It will solve your problems easily.
+                </div>
+                <img src="old_farmer.png" alt="Tenali Ramakrishna Sketch" class="max-h-[65vh]">
+            </div>
+
+        </div>
+    </section>
+
+    <section id="features" class="py-20 bg-white">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800">Your AI Farming Assistant</h2>
+                <p class="text-gray-600 mt-4 max-w-2xl mx-auto">MannAI provides you with cutting-edge tools to make informed decisions and boost your crop yield.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <div class="text-emerald-500 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Hyperlocal Weather Detection</h3>
+                    <p class="text-gray-600">Get accurate, real-time weather forecasts specific to your farm's location.</p>
+                </div>
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <div class="text-emerald-500 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Crop Disease Identification</h3>
+                    <p class="text-gray-600">Upload a picture of your crop, and our AI will instantly identify diseases.</p>
+                </div>
+                <div class="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-xl transition-shadow">
+                    <div class="text-emerald-500 mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Satellite Imagery Analysis</h3>
+                    <p class="text-gray-600">Monitor your farm's health from above for crop stress and irrigation needs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="news" class="py-20 bg-emerald-50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold text-gray-800">📰 Agricultural News</h2>
+                <p class="text-gray-600 mt-4 max-w-2xl mx-auto">Stay updated with the latest happenings in the world of agriculture, both globally and locally in Kerala.</p>
+            </div>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-2xl font-bold mb-6 border-b-2 border-emerald-500 pb-2">Global Headlines</h3>
+                    <div id="global-news-container" class="space-y-6">
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-2xl font-bold mb-6 border-b-2 border-emerald-500 pb-2">Kerala Local Updates</h3>
+                    <div id="kerala-news-container" class="space-y-6">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="contact" class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-6 text-center">
+            <p>&copy; SIH TEAM MannAI</p>
+            <p class="text-gray-400">Empowering farmers with the technology of tomorrow.</p>
+            <p class="text-gray-400">FrontEnd Developer & Plant Disease Detection - Srijan Jain</p>
+            <p class="text-gray-400">System Architect & Weather Detection - Parth Gupta</p>
+            <p class="text-gray-400">Satellite Imagery Analysis - Arnav Saxena</p>
+            <p class="text-gray-400">Support By- Aarjav, Rohit, Pearl</p>
+        </div>
+    </footer>
+
+    <div class="chatbot-container">
+        <button id="chatbot-fab" class="bg-emerald-500 text-white w-16 h-16 rounded-full flex items-center justify-center shadow-lg hover:bg-emerald-600 transition"><img src="images\logo.png" alt="✨" class="w-12 h-12"></button>
+        <div id="chatbot-window" class="chatbot-window bg-white flex flex-col transform scale-0">
+            <div class="bg-emerald-500 text-white p-4 rounded-t-lg flex justify-between items-center">
+                <h3 class="font-bold">MannAI Assistant</h3><button id="close-chatbot" class="text-2xl font-bold">&times;</button>
+            </div>
+            <div class="p-2 bg-gray-100 flex justify-center text-sm"><button id="lang-en" class="px-3 py-1 rounded-md bg-emerald-200 text-emerald-800 font-semibold">English</button><button id="lang-ml" class="px-3 py-1 rounded-md ml-2 text-gray-600">മലയാളം</button></div>
+            <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col space-y-2"></div>
+            <div class="p-4 border-t border-gray-200 flex items-center"><input type="text" id="chat-input" class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Ask me anything about farming..."><button id="send-btn" class="ml-3 bg-emerald-500 text-white p-2 rounded-full"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg></button></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const farmer1Div = document.getElementById('farmer1');
+            const farmer2Div = document.getElementById('farmer2');
+            const oldFarmerDiv = document.getElementById('old-farmer');
+            const bubble1 = document.getElementById('bubble1');
+            const bubble2 = document.getElementById('bubble2');
+            const bubbleOld = document.getElementById('bubble-old');
+            const farmersGroup = document.getElementById('farmers-group');
+
+            const startAnimation = () => {
+                farmer1Div.classList.add('is-active');
+                farmer2Div.classList.add('is-inactive');
+                bubble1.classList.add('visible');
+
+                setTimeout(() => {
+                    farmer1Div.classList.remove('is-active');
+                    farmer1Div.classList.add('is-inactive');
+                    bubble1.classList.remove('visible');
+                    farmer2Div.classList.remove('is-inactive');
+                    farmer2Div.classList.add('is-active');
+                    bubble2.classList.add('visible');
+                }, 7000);
+
+                setTimeout(() => {
+                    farmer2Div.classList.remove('is-active');
+                    farmer2Div.classList.add('is-inactive');
+                    bubble2.classList.remove('visible');
+                    farmer1Div.classList.remove('is-inactive');
+                    farmer1Div.classList.add('is-active');
+                    bubble1.innerHTML = `<p class="font-bold text-emerald-700 text-xs mb-1">Gopalan:</p>Let's ask the senior farmer. He might know something.`;
+                    bubble1.classList.add('visible');
+                }, 14000);
+
+                setTimeout(() => {
+                    bubble1.innerHTML = `<p class="font-bold text-emerald-700 text-xs mb-1">Gopalan:</p>Sir, we have some problems...`;
+
+                    setTimeout(() => {
+                        farmer2Div.classList.add('flipped');
+                        farmersGroup.style.transform = 'translateX(50vw)';
+                    }, 500);
+
+                }, 18000);
+
+                setTimeout(() => {
+                    bubble1.classList.remove('visible');
+                    farmer1Div.classList.remove('is-active');
+                    farmer2Div.classList.remove('is-active');
+                    farmer1Div.classList.add('is-inactive');
+                    farmer2Div.classList.add('is-inactive');
+                    oldFarmerDiv.classList.add('is-active');
+                    bubbleOld.classList.add('visible');
+                }, 22000);
+
+                setTimeout(() => {
+                    document.getElementById('features').scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }, 25500);
+            };
+
+            const placeholderGlobalNews = [{
+                title: "Brazil's Agricultural Sector Sees Major Growth",
+                summary: "Recent reports indicate a significant boom in Brazil's agricultural output, reinforcing its role as a global food supplier."
+            }, {
+                title: "Advancements in Drone Technology for Farming",
+                summary: "The use of drones for crop monitoring and spraying is becoming more widespread, promising increased efficiency for farms globally."
+            }, {
+                title: "Climate Change Poses New Challenges for Farmers",
+                summary: "Farmers worldwide are adapting to unpredictable weather patterns by implementing new resilient farming techniques."
+            }];
+
+            const placeholderKeralaNews = [{
+                title: "Government Launches New Farmers' Market Initiative",
+                summary: "To support local growers, the Kerala government has inaugurated new markets aimed at providing better prices and direct-to-consumer sales channels."
+            }, {
+                title: "Coconut Cultivation Faces Challenges",
+                summary: "Experts are discussing solutions for the recent decline in coconut yields, citing climate factors and pest issues as primary concerns."
+            }, {
+                title: "Push for Organic and Toxin-Free Vegetables",
+                summary: "There is a growing movement within the state to promote organic farming practices to ensure healthier produce for festival seasons."
+            }];
+
+            const loadPlaceholderNews = () => {
+                const globalContainer = document.getElementById('global-news-container');
+                const keralaContainer = document.getElementById('kerala-news-container');
+                globalContainer.innerHTML = '';
+                keralaContainer.innerHTML = '';
+
+                placeholderGlobalNews.forEach(item => {
+                    const newsDiv = document.createElement('div');
+                    newsDiv.className = 'bg-white p-6 rounded-lg shadow-md';
+                    newsDiv.innerHTML = `
+                        <h4 class="font-bold text-lg">${item.title}</h4>
+                        <p class="text-gray-600 mt-2">${item.summary}</p>
+                    `;
+                    globalContainer.appendChild(newsDiv);
+                });
+
+                placeholderKeralaNews.forEach(item => {
+                    const newsDiv = document.createElement('div');
+                    newsDiv.className = 'bg-white p-6 rounded-lg shadow-md';
+                    newsDiv.innerHTML = `
+                        <h4 class="font-bold text-lg">${item.title}</h4>
+                        <p class="text-gray-600 mt-2">${item.summary}</p>
+                    `;
+                    keralaContainer.appendChild(newsDiv);
+                });
+            };
+
+            const chatbotFab = document.getElementById('chatbot-fab');
+            const chatbotWindow = document.getElementById('chatbot-window');
+            const closeChatbotBtn = document.getElementById('close-chatbot');
+            const chatMessages = document.getElementById('chat-messages');
+            const chatInput = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            const langEnBtn = document.getElementById('lang-en');
+            const langMlBtn = document.getElementById('lang-ml');
+            const chatbotContainer = document.querySelector('.chatbot-container');
+
+            let currentLang = 'en';
+            const initialGreetings = {
+                en: "Hello! I'm MannAI, your farming assistant. How can I help you today?",
+                ml: "നമസ്കാരം! ഞാൻ MannAI, നിങ്ങളുടെ കാർഷിക സഹായി. എനിക്ക് നിങ്ങളെ എങ്ങനെ സഹായിക്കാൻ കഴിയും?"
+            };
+
+            const toggleChatbot = () => chatbotWindow.classList.toggle('scale-0');
+
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            const dragStart = (e) => {
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+
+                if (e.target === chatbotFab || e.target.closest('#chatbot-fab')) {
+                    isDragging = true;
+                    chatbotContainer.classList.add('dragging');
+                }
+            };
+
+            const dragEnd = (e) => {
+                isDragging = false;
+                chatbotContainer.classList.remove('dragging');
+            };
+
+            const drag = (e) => {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    const containerWidth = chatbotContainer.offsetWidth;
+                    const containerHeight = chatbotContainer.offsetHeight;
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+
+                    let newLeft = Math.max(0, Math.min(xOffset, viewportWidth - containerWidth));
+                    let newTop = Math.max(0, Math.min(yOffset, viewportHeight - containerHeight));
+
+                    chatbotContainer.style.left = `${newLeft}px`;
+                    chatbotContainer.style.top = `${newTop}px`;
+                    chatbotContainer.style.right = 'auto';
+                    chatbotContainer.style.bottom = 'auto';
+                }
+            };
+
+            chatbotContainer.addEventListener('mousedown', dragStart, false);
+            document.addEventListener('mouseup', dragEnd, false);
+            document.addEventListener('mousemove', drag, false);
+
+            chatbotFab.addEventListener('click', toggleChatbot);
+            closeChatbotBtn.addEventListener('click', toggleChatbot);
+
+            const addMessage = (text, sender) => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message p-3 rounded-lg ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+                messageDiv.textContent = text;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            };
+
+            const handleSend = () => {
+                const userInput = chatInput.value.trim();
+                if (!userInput) return;
+                addMessage(userInput, 'user');
+                chatInput.value = '';
+
+                setTimeout(() => {
+                    const reply = currentLang === 'en' ? "Thank you for your message. An expert will connect with you shortly." : "നിങ്ങളുടെ സന്ദേശത്തിനു നന്ദി. ഒരു വിദഗ്ദ്ധൻ നിങ്ങളുമായി ഉടൻ ബന്ധപ്പെടുന്നതാണ്.";
+                    addMessage(reply, 'bot');
+                }, 1000);
+            };
+
+            sendBtn.addEventListener('click', handleSend);
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSend();
+            });
+            langEnBtn.addEventListener('click', () => {
+                currentLang = 'en';
+                langEnBtn.classList.add('bg-emerald-200', 'text-emerald-800', 'font-semibold');
+                langMlBtn.classList.remove('bg-emerald-200', 'text-emerald-800', 'font-semibold');
+                chatInput.placeholder = "Ask me anything about farming...";
+                addMessage(initialGreetings.en, 'bot');
+            });
+            langMlBtn.addEventListener('click', () => {
+                currentLang = 'ml';
+                langMlBtn.classList.add('bg-emerald-200', 'text-emerald-800', 'font-semibold');
+                langEnBtn.classList.remove('bg-emerald-200', 'text-emerald-800', 'font-semibold');
+                chatInput.placeholder = "കൃഷിയെക്കുറിച്ച് എന്തും ചോതിക്കൂ...";
+                addMessage(initialGreetings.ml, 'bot');
+            });
+
+            window.onload = () => {
+                startAnimation();
+                loadPlaceholderNews();
+                addMessage(initialGreetings.en, 'bot');
+            };
+        });
+    </script>
+</body>
+
+</html>

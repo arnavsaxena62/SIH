@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: plant-disease-api
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port 10000"
+    envVars:
+      - key: KINDWISE_API_KEY
+        value: OQDseiu6gH6caKEtq86jjr4BayB2tg6YFzfs8LwH03UEufNzHG
