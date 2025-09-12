@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Dict, Any, Optional
 import requests
+import pprint
 
 KERALA_CITIES = {
     "kochi": {"lat": 9.9312, "lon": 76.2673},
@@ -76,5 +77,8 @@ def get_hourly_forecast(city: Optional[str] = None, lat: Optional[float] = None,
             windspeed_ms=float(winds[i]) if i < len(winds) else 0.0,
             windgust_ms=(float(gusts[i]) if i < len(gusts) else None),
         ))
+    result = Forecast(latitude=loc["lat"], longitude=loc["lon"], timezone=tz, hourly=points)
 
-    return Forecast(latitude=loc["lat"], longitude=loc["lon"], timezone=tz, hourly=points)
+    return result
+
+pprint.pprint(get_hourly_forecast())
