@@ -61,8 +61,27 @@ def main():
         alerts = analyze_forecast(forecast, slots)
         print(json.dumps({"city": city, "alerts": alerts}, indent=4))
     else:
-        print(json.dumps({"error": f"Could not fetch forecast for {city}"}))
+        messagebox.showerror("Error", f"Could not fetch forecast for '{city}'.")
 
+def main():
+    # --- Tkinter UI ---
+    root = tk.Tk()
+    root.title("Weather Forecast")
+    root.geometry("700x500")
 
-if __name__ == "__main__":
-    main()
+    tk.Label(root, text="City:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+    city_entry = tk.Entry(root, width=30)
+    city_entry.grid(row=0, column=1, padx=5, pady=5)
+
+    tk.Label(root, text="Hours to forecast:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
+    hours_entry = tk.Entry(root, width=10)
+    hours_entry.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+
+    fetch_btn = tk.Button(root, text="Get Forecast", command=lambda: fetch_forecast(city_entry, hours_entry, output_widget))
+    fetch_btn.grid(row=2, column=0, columnspan=2, pady=10)
+
+    output_widget = scrolledtext.ScrolledText(root, width=85, height=25)
+    output_widget.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+
+    root.mainloop()
+    
